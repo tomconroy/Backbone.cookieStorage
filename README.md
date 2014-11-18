@@ -1,10 +1,6 @@
-# Backbone localStorage Adapter v1.1.10
+# Backbone cookieStorage Adapter
 
-[![Build Status](https://secure.travis-ci.org/jeromegn/Backbone.localStorage.png?branch=master)](http://travis-ci.org/jeromegn/Backbone.localStorage)
-
-Quite simply a localStorage adapter for Backbone. It's a drop-in replacement for Backbone.Sync() to handle saving to a localStorage database.
-
-[![Gittip](http://badgr.co/gittip/jeromegn.png)](https://www.gittip.com/jeromegn/)
+This is a fork of [Backbone.localStorage](https://github.com/jeromegn/Backbone.localStorage) that stores to [Cookies](https://github.com/ScottHamper/Cookies) instead of localStorage.
 
 ## Usage
 
@@ -19,11 +15,11 @@ Create your collections like so:
 
 ```javascript
 window.SomeCollection = Backbone.Collection.extend({
-  
+
   localStorage: new Backbone.LocalStorage("SomeCollection"), // Unique name within your app.
-  
+
   // ... everything else is normal.
-  
+
 });
 ```
 ### RequireJS
@@ -34,7 +30,7 @@ Include [RequireJS](http://requirejs.org):
 <script type="text/javascript" src="lib/require.js"></script>
 ```
 
-RequireJS config: 
+RequireJS config:
 ```javascript
 require.config({
     paths: {
@@ -52,7 +48,7 @@ define("SomeCollection", ["localstorage"], function() {
     var SomeCollection = Backbone.Collection.extend({
         localStorage: new Backbone.LocalStorage("SomeCollection") // Unique name within your app.
     });
-  
+
     return SomeCollection;
 });
 ```

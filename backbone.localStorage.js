@@ -6,17 +6,17 @@
  */
 (function (root, factory) {
   if (typeof exports === 'object' && typeof require === 'function') {
-    module.exports = factory(require("backbone"));
+    module.exports = factory(require("backbone"), require("cookies-js"));
   } else if (typeof define === "function" && define.amd) {
     // AMD. Register as an anonymous module.
-    define(["backbone"], function(Backbone) {
+    define(["backbone", "cookies-js"], function(Backbone, Cookie) {
       // Use global variables if the locals are undefined.
-      return factory(Backbone || root.Backbone);
+      return factory(Backbone || root.Backbone, Cookies);
     });
   } else {
-    factory(Backbone);
+    factory(Backbone, Cookies);
   }
-}(this, function(Backbone) {
+}(this, function(Backbone, Cookies) {
 // A simple module to replace `Backbone.sync` with *localStorage*-based
 // persistence. Models are given GUIDS, and saved into a JSON object. Simple
 // as that.
@@ -56,9 +56,6 @@ function result(object, property) {
 // with a meaningful name, like the name you'd give a table.
 // window.Store is deprectated, use Backbone.LocalStorage instead
 Backbone.LocalStorage = window.Store = function(name, serializer) {
-  if( !this.localStorage ) {
-    throw "Backbone.localStorage: Environment does not support localStorage."
-  }
   this.name = name;
   this.serializer = serializer || {
     serialize: function(item) {
@@ -69,7 +66,7 @@ Backbone.LocalStorage = window.Store = function(name, serializer) {
       return data && JSON.parse(data);
     }
   };
-  var store = this.localStorage().getItem(this.name);
+  var store = Cookies.get(this.name);
   this.records = (store && store.split(",")) || [];
 };
 
@@ -77,7 +74,7 @@ extend(Backbone.LocalStorage.prototype, {
 
   // Save the current state of the **Store** to *localStorage*.
   save: function() {
-    this.localStorage().setItem(this.name, this.records.join(","));
+    Cookies.set(this.name, this.records.join(","));
   },
 
   // Add a model, giving it a (hopefully)-unique GUID, if it doesn't already
@@ -87,7 +84,7 @@ extend(Backbone.LocalStorage.prototype, {
       model.id = guid();
       model.set(model.idAttribute, model.id);
     }
-    this.localStorage().setItem(this._itemName(model.id), this.serializer.serialize(model));
+    Cookies.set(this._itemName(model.id), this.serializer.serialize(model));
     this.records.push(model.id.toString());
     this.save();
     return this.find(model);
@@ -95,7 +92,7 @@ extend(Backbone.LocalStorage.prototype, {
 
   // Update a model by replacing its copy in `this.data`.
   update: function(model) {
-    this.localStorage().setItem(this._itemName(model.id), this.serializer.serialize(model));
+    Cookies.set(this._itemName(model.id), this.serializer.serialize(model));
     var modelId = model.id.toString();
     if (!contains(this.records, modelId)) {
       this.records.push(modelId);
@@ -106,7 +103,7 @@ extend(Backbone.LocalStorage.prototype, {
 
   // Retrieve a model from `this.data` by id.
   find: function(model) {
-    return this.serializer.deserialize(this.localStorage().getItem(this._itemName(model.id)));
+    return this.serializer.deserialize(Cookies.get(this._itemName(model.id)));
   },
 
   // Return the array of all models currently in storage.
@@ -114,7 +111,7 @@ extend(Backbone.LocalStorage.prototype, {
     var result = [];
     for (var i = 0, id, data; i < this.records.length; i++) {
       id = this.records[i];
-      data = this.serializer.deserialize(this.localStorage().getItem(this._itemName(id)));
+      data = this.serializer.deserialize(Cookies.get(this._itemName(id)));
       if (data != null) result.push(data);
     }
     return result;
@@ -122,7 +119,7 @@ extend(Backbone.LocalStorage.prototype, {
 
   // Delete a model from `this.data`, returning it.
   destroy: function(model) {
-    this.localStorage().removeItem(this._itemName(model.id));
+    Cookies.expire(this._itemName(model.id));
     var modelId = model.id.toString();
     for (var i = 0, id; i < this.records.length; i++) {
       if (this.records[i] === modelId) {
@@ -143,12 +140,14 @@ extend(Backbone.LocalStorage.prototype, {
       itemRe = new RegExp("^" + this.name + "-");
 
     // Remove id-tracking item (e.g., "foo").
-    local.removeItem(this.name);
+    Cookies.expire(this.name);
 
     // Match all data items (e.g., "foo-ID") and remove.
-    for (var k in local) {
-      if (itemRe.test(k)) {
-        local.removeItem(k);
+    Cookies._renewCache();
+    for (var k in Cookies._cache) {
+      var cookieKey = k.replace(new RegExp("^" + Cookies._cacheKeyPrefix), '')
+      if (itemRe.test(cookieKey)) {
+        Cookies.expire(cookieKey);
       }
     }
 

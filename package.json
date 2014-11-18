@@ -16,7 +16,8 @@
     "mocha-phantomjs": "~1.1.2",
     "browserify": "~2.x.x",
     "jquery": "~2.1.0",
-    "underscore": ">=1.4.0"
+    "underscore": ">=1.4.0",
+    "cookies-js": "^1.1.0"
   },
   "keywords": [
     "backbone",

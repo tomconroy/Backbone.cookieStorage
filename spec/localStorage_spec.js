@@ -70,8 +70,8 @@ describe("Backbone.localStorage", function(){
         assert.isDefined(model.id);
       });
 
-      it("should be saved to the localstorage", function(){
-        assert.isNotNull(window.localStorage.getItem('collectionStore'+'-'+model.id));
+      it("should be saved to the cookie", function(){
+        assert.isNotNull(Cookies.get('collectionStore'+'-'+model.id));
       });
 
     });
@@ -125,8 +125,8 @@ describe("Backbone.localStorage", function(){
             assert.deepEqual(model2.toJSON(), withId);
           });
 
-          it("should be saved in localstorage by new id", function() {
-            assert.isNotNull(window.localStorage.getItem('collectionStore-1'));
+          it("should be saved in cookie by new id", function() {
+            assert.isNotNull(Cookies.get('collectionStore-1'));
           });
 
         });
@@ -234,8 +234,8 @@ describe("Backbone.localStorage", function(){
         assert.isDefined(model.id);
       });
 
-      it("should be saved to the localstorage", function(){
-        assert.isNotNull(window.localStorage.getItem('modelStore'+'-'+model.id));
+      it("should be saved to the cookie", function(){
+        assert.isNotNull(Cookies.get('modelStore'+'-'+model.id));
       });
 
       describe("with new attributes", function(){
@@ -284,60 +284,6 @@ describe("Backbone.localStorage", function(){
 
   });
 
-  describe("Error handling", function(){
-
-    var Model = Backbone.Model.extend({
-      defaults: attributes,
-      localStorage: new Backbone.LocalStorage("modelStore")
-    });
-
-    describe("private browsing", function(){
-
-      var model = new Model()
-        , oldSetItem = window.localStorage.setItem
-        , oldStorageSize = model.localStorage._storageSize
-        , error;
-
-      before(function(done){
-        model.localStorage._clear();
-
-        // Patch browser conditions for private error.
-        model.localStorage._storageSize = function(){ return 0; };
-        window.localStorage.setItem = function(){
-          var error = new Error();
-          error.code = DOMException.QUOTA_EXCEEDED_ERR;
-          throw error;
-        };
-
-        model.save(attributes, {
-          error: function(model, err){
-            error = err;
-            done();
-          }
-        })
-      });
-
-      it("should return the error in the error callback", function(){
-        assert.equal(error, "Private browsing is unsupported");
-      });
-
-      it('should throw an error event', function(done){
-        model.on('error', function() {
-          done();
-        });
-        model.save();
-      });
-
-      after(function(){
-        // Unwrap patches.
-        model.localStorage._storageSize = oldStorageSize;
-        window.localStorage.setItem = oldSetItem;
-      })
-
-    });
-
-  });
-
 });
 
 describe("Without Backbone.localStorage", function(){
@@ -372,7 +318,8 @@ describe("AMD", function(){
       jquery: "support/jquery",
       underscore: "support/underscore",
       backbone: "support/backbone",
-      localstorage: "../backbone.localStorage"
+      localstorage: "../backbone.localStorage",
+      'cookies-js': "support/cookies"
     }
   });
 
